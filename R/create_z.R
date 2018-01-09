@@ -4,14 +4,17 @@
 #' observation for each unit (i) and one column for each variable to be used as
 #' a control.
 #' @param data A data.frame
-#' @param ...
-create_z_matrix <- function(data, ...) {
-  my_vars <- quos(...)
+#' @param ... Variables to be included as controls
+#' @importFrom dplyr quos "%>%"
+#' @importFrom tidyr gather
+#' @export
+create_z_matrix <- function(data, i_name, t_name, ...) {
+  my_vars <- dplyr::quos(...)
 
   lapply(seq(1, length(my_vars)), convert_quo_value, my_vars) %>%
     lapply(make_z_variable, data = data, i_name = i_name, t_name = t_name) %>%
-    Reduce(function(x, y) merge(x, y, all = TRUE), .)
-
+    Reduce(function(x, y) merge(x, y, all = TRUE), .) %>%
+    gather(key = variable, value = value, -!!i_name)
 
 }
 
@@ -22,6 +25,8 @@ create_z_matrix <- function(data, ...) {
 #' @param x The value attribute of a quosure produced by the quos function.
 #' @return A list with three attributes:  name (character), formula (quosure),
 #' and filter (numeric or date vector)
+#' @importFrom dplyr quo_name "%>%"
+#' @importFrom stringr str_split str_trim
 convert_quo_value <- function(x, quo_list) {
   this_quo <- quo_list[x]
 
@@ -55,6 +60,12 @@ convert_quo_value <- function(x, quo_list) {
   ret_val
 }
 
+#' Make Individual Z Variable
+#'
+#' This function takes the inpute produced by convert_quo_value for a single
+#' control variable and returns a data.frame with its value.
+#' @importFrom dplyr filter group_by summarize
+#' @importFrom rlang parse_expr
 make_z_variable <- function(quo_list, data, i_name, t_name) {
   if (is.numeric(quo_list$filter)) {
     data <- filter(data, (!! t_name)  %in% quo_list$filter)

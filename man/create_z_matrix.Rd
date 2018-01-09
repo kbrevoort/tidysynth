@@ -4,10 +4,12 @@
 \alias{create_z_matrix}
 \title{Create Z Matrix}
 \usage{
-create_z_matrix(data, ...)
+create_z_matrix(data, i_name, t_name, ...)
 }
 \arguments{
 \item{data}{A data.frame}
+
+\item{...}{Variables to be included as controls}
 }
 \description{
 This function creates a Z matrix for the synthetic panel.  It contains one

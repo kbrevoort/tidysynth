@@ -1,3 +1,18 @@
+#' Create Y Matrix
+#'
+#' This function creats a data.frame that contains the information on the time-
+#' varying variables.
+#' @param data A data.frame
+#' @param i_var A character variable with the name of the unit variable (i)
+#' @param t_var A character variable with the name of the time variable (t)
+#' @param g_def A character variable with the boolean logic to identify observations
+#' in the treatment group.
+#' @param time_span An optional vector with up to three values:  The earliest value
+#' of t_var allowed, the latest value that is part of the pre-treatment period,
+#' and the latest time period allowd.
+#' @param y A character variable with the name of any y variables to include
+#' @importFrom dplyr select mutate
+#' @export
 create_y_matrix <- function(data, i_var, t_var, g_def, time_span, y) {
   if (missing(data) | !is.data.frame(data))
     stop('Must supply a valid data.frame to create_y_matrix.')
@@ -54,7 +69,7 @@ create_y_matrix <- function(data, i_var, t_var, g_def, time_span, y) {
           by = i_var,
           all.y = TRUE) %>%
     select(!!! lapply(c(i_var, t_var, 'group_def', y), as.name)) %>%
-    gather(key = y_var, value = y, -!!i_name, -!!t_name, -group_def)
+    gather(key = variable, value = value, -!!i_name, -!!t_name, -group_def)
 }
 
 #' Remove Observations (i) with Duplicate Time Values
