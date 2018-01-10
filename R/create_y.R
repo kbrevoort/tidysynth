@@ -13,63 +13,31 @@
 #' @param y A character variable with the name of any y variables to include
 #' @importFrom dplyr select mutate
 #' @export
-create_y_matrix <- function(data, i_var, t_var, g_def, time_span, y) {
-  if (missing(data) | !is.data.frame(data))
-    stop('Must supply a valid data.frame to create_y_matrix.')
+create_y_matrix <- function(data, i_name, t_name, y) {
+  # Make sure that all y are in data
+  if (any(y %notin% names(data)))
+    stop('Variable names included in y are not found on the data.frame supplied.')
 
-  if (!all(c(i_var, t_var) %in% names(data)))
-    stop('Individual or time variable not found in data.frame supplied to create_y_matix')
+  y_data <- select(!!! lapply(c(as.character(i_name),
+                      as.character(t_name),
+                      y),
+                    as.name)) %>%
+    gather(key = variable, value = value, -!!i_name, -!!t_name)
 
-  if (missing(time_span)) {
-    date_range <- c(min(data[[t_var]], na.rm = TRUE),
-                   max(data[[t_var]], na.rm = TRUE))
-  } else if (length(time_span) <= 2) {
-    date_range <- c(time_span[[1]],
-                   max(data[[t_var]], na.rm = TRUE))
-  } else if (length(time_span) == 3) {
-    date_range <- time_span[c(1, 3)]
-  } else stop('Invalid time_span supplied to create_y_matrix.')
+  # Remove any units that have 1 or more missing values of the y-variables
+  bad_obs <- filter(y_data, is.na(value)) %>%
+    select(!! i_name) %>%
+    unique()
 
-  # Create name versions of the input variables
-  t_name <- as.name(t_var)
-  i_name <- as.name(i_var)
+  num_bad <- dim(bad_obs)[1]
+  if (num_bad > 0) {
+    glue::glue('Removing {num_bad} units that have missing y variables') %>%
+      warning()
 
-  data <- remove_duplicates(data, i_name, t_name)
-
-  my_data <- filter(data,
-                    (!! t_name) >= date_range[[1]] &
-                      (!! t_name) <= date_range[[2]])
-  all_dates <- unique(my_data[[t_var]])
-  num_dates <- length(all_dates)
-
-  # Only keep observations with complete date information
-  i_vals <- group_by(my_data, !! i_name) %>%
-    summarize(n = length(!! t_name)) %>%
-    filter(n == num_dates) %>%
-    select(!! i_name)
-
-  # Check if observations have been removed because of incomplete date inforation
-  # and if so warn the user
-  if (dim(my_data)[1] > dim(i_vals)[1]) {
-    num_dropped <- setdiff(unique(my_data[i_var]), unique(i_vals[i_var])) %>%
-      length()
-    if (num_dropped > 0) {
-      glue('Removed {num_dropped} observations for incomplete date information.') %>%
-        warning()
-    }
+    y_data <- anti_join(y_data, bad_obs)
   }
 
-  # Create group_def logical variable that is TRUE if observation is part of
-  # treatment. (This is also where num_dropped observations are dropped.)
-  is_treated <- eval(substitute(g_def), my_data, parent.frame())
-  if (!is.logical(is_treated)) stop('g_def must supply a logical result.')
-
-  mutate(my_data, group_def = is_treated) %>%
-    merge(i_vals,
-          by = i_var,
-          all.y = TRUE) %>%
-    select(!!! lapply(c(i_var, t_var, 'group_def', y), as.name)) %>%
-    gather(key = variable, value = value, -!!i_name, -!!t_name, -group_def)
+  y_data
 }
 
 #' Remove Observations (i) with Duplicate Time Values

@@ -54,7 +54,7 @@ convert_quo_value <- function(x, quo_list) {
       parse(text = .) %>%
       eval()
   } else {
-    ret_val$filter <- TRUE
+    ret_val$filter <- NA
   }
 
   ret_val
@@ -67,7 +67,7 @@ convert_quo_value <- function(x, quo_list) {
 #' @importFrom dplyr filter group_by summarize
 #' @importFrom rlang parse_expr
 make_z_variable <- function(quo_list, data, i_name, t_name) {
-  if (is.numeric(quo_list$filter)) {
+  if (!is.na(quo_list$filter)) {
     data <- filter(data, (!! t_name)  %in% quo_list$filter)
   }
 
