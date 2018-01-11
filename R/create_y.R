@@ -18,7 +18,7 @@ create_y_matrix <- function(data, i_name, t_name, y) {
   if (any(y %notin% names(data)))
     stop('Variable names included in y are not found on the data.frame supplied.')
 
-  y_data <- select(!!! lapply(c(as.character(i_name),
+  y_data <- select(data, !!! lapply(c(as.character(i_name),
                       as.character(t_name),
                       y),
                     as.name)) %>%
@@ -37,7 +37,7 @@ create_y_matrix <- function(data, i_name, t_name, y) {
     y_data <- anti_join(y_data, bad_obs)
   }
 
-  y_data
+  mutate(y_data, matrix = 'y')
 }
 
 #' Remove Observations (i) with Duplicate Time Values

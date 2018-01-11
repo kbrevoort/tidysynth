@@ -4,10 +4,12 @@
 \alias{create_y_matrix}
 \title{Create Y Matrix}
 \usage{
-create_y_matrix(data, i_var, t_var, g_def, time_span, y)
+create_y_matrix(data, i_name, t_name, y)
 }
 \arguments{
 \item{data}{A data.frame}
+
+\item{y}{A character variable with the name of any y variables to include}
 
 \item{i_var}{A character variable with the name of the unit variable (i)}
 
@@ -19,8 +21,6 @@ in the treatment group.}
 \item{time_span}{An optional vector with up to three values:  The earliest value
 of t_var allowed, the latest value that is part of the pre-treatment period,
 and the latest time period allowd.}
-
-\item{y}{A character variable with the name of any y variables to include}
 }
 \description{
 This function creats a data.frame that contains the information on the time-
